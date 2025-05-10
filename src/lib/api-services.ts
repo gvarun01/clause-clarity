@@ -14,52 +14,123 @@ export interface FollowupResponse {
   answer: string;
 }
 
+// Function to handle Gemini API requests
+async function callGeminiAPI(prompt: string, apiKey: string) {
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to get response from Gemini API');
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    throw error;
+  }
+}
+
 export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
   try {
-    // This would be a real API call in production
-    // const response = await fetch('/api/analyze', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ clause }),
-    // });
+    // Get API key from localStorage (this would be set by user)
+    const apiKey = localStorage.getItem('gemini_api_key');
     
-    // if (!response.ok) throw new Error('Failed to analyze clause');
-    // return await response.json();
+    if (!apiKey) {
+      toast.error('Please enter your Gemini API key in settings');
+      throw new Error('Gemini API key not found');
+    }
+
+    // Create prompts for the different analysis parts
+    const simplificationPrompt = `
+      I need you to analyze and simplify the following legal clause in plain English. Provide a clear, concise explanation that a non-lawyer can understand:
+      
+      "${clause}"
+      
+      Respond with ONLY the simplified explanation, without any additional text.
+    `;
     
-    // For now, let's simulate an API response
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
-    
-    // Create a realistic mock response based on the input
-    const hasIndemnify = clause.toLowerCase().includes('indemnify');
-    const hasLiability = clause.toLowerCase().includes('liability');
-    const hasWarranty = clause.toLowerCase().includes('warranty');
-    const hasArbitration = clause.toLowerCase().includes('arbitration');
-    
-    return {
-      simplifiedExplanation: `This legal clause ${hasIndemnify ? 'requires you to cover financial losses' : ''} ${hasLiability ? 'limits what the other party is responsible for' : ''} ${hasWarranty ? 'describes what guarantees are or aren\'t being made' : ''} ${hasArbitration ? 'requires disputes to be settled outside of court' : ''}.${!hasIndemnify && !hasLiability && !hasWarranty && !hasArbitration ? 'appears to be discussing contractual terms related to the agreement between parties. It establishes certain responsibilities and limitations, though without more specific legal terminology it\'s difficult to identify particular risks.' : ''}`,
-      riskyTerms: [
-        ...(hasIndemnify ? [{
-          term: "indemnify",
-          severity: "high" as const,
-          explanation: "This means you agree to pay for any financial losses or legal costs the other party might face."
-        }] : []),
-        ...(hasLiability ? [{
-          term: "liability",
-          severity: "high" as const,
-          explanation: "The other party is limiting or removing their responsibility for potential problems or damages."
-        }] : []),
-        ...(hasWarranty ? [{
-          term: "warranty",
-          severity: "moderate" as const,
-          explanation: "This defines what guarantees are (or more likely aren't) being made about products or services."
-        }] : []),
-        ...(hasArbitration ? [{
-          term: "arbitration",
-          severity: "moderate" as const,
-          explanation: "Disputes must be resolved through arbitration rather than court, which may limit your legal options."
-        }] : []),
+    const riskyTermsPrompt = `
+      Analyze the following legal clause and identify potentially risky terms that could be unfavorable to one party:
+      
+      "${clause}"
+      
+      For each risky term you identify, provide:
+      1. The specific term/word (just the word or short phrase)
+      2. A severity level (high, moderate, or low)
+      3. A brief explanation of why this term is risky
+      
+      Format your response strictly as JSON with this structure:
+      [
+        {
+          "term": "word or short phrase",
+          "severity": "high/moderate/low",
+          "explanation": "brief explanation"
+        },
+        {...}
       ]
+      
+      If no risky terms are found, return an empty array: []
+    `;
+
+    // Make parallel API calls for efficiency
+    toast.info('Analyzing your legal clause...');
+    const [simplifiedExplanation, riskyTermsResponse] = await Promise.all([
+      callGeminiAPI(simplificationPrompt, apiKey),
+      callGeminiAPI(riskyTermsPrompt, apiKey)
+    ]);
+
+    // Parse the risky terms JSON
+    let riskyTerms = [];
+    try {
+      // Find JSON content by looking for array brackets
+      const jsonMatch = riskyTermsResponse.match(/\[\s*\{.*\}\s*\]/s);
+      const jsonStr = jsonMatch ? jsonMatch[0] : '[]';
+      riskyTerms = JSON.parse(jsonStr);
+      
+      // Ensure correct format for each term
+      riskyTerms = riskyTerms.map(term => ({
+        term: term.term || '',
+        severity: ['high', 'moderate', 'low'].includes(term.severity?.toLowerCase()) 
+          ? term.severity.toLowerCase() 
+          : 'moderate',
+        explanation: term.explanation || ''
+      }));
+    } catch (error) {
+      console.error('Failed to parse risky terms:', error);
+      riskyTerms = [];
+    }
+
+    const result: AnalysisResponse = {
+      simplifiedExplanation: simplifiedExplanation.trim(),
+      riskyTerms: riskyTerms
     };
+
+    return result;
   } catch (error) {
     console.error('Analysis error:', error);
     toast.error('Failed to analyze the legal clause');
@@ -69,37 +140,26 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
 
 export async function submitFollowupQuestion(question: string, originalClause: string): Promise<FollowupResponse> {
   try {
-    // This would be a real API call in production
-    // const response = await fetch('/api/followup', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ question, originalClause }),
-    // });
+    // Get API key from localStorage
+    const apiKey = localStorage.getItem('gemini_api_key');
     
-    // if (!response.ok) throw new Error('Failed to submit follow-up question');
-    // return await response.json();
-    
-    // For now, let's simulate an API response
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    
-    // Generate a response based on common legal questions
-    if (question.toLowerCase().includes('indemnify')) {
-      return {
-        answer: "To 'indemnify' means you agree to compensate the other party for any losses, damages, or legal expenses they might incur. This is a high-risk term because it can create significant financial obligations for you, potentially without limits."
-      };
-    } else if (question.toLowerCase().includes('enforceable')) {
-      return {
-        answer: "Enforceability depends on jurisdiction and specific circumstances. Generally, clauses are enforceable if both parties knowingly agreed to them, they don't violate public policy, and they're not unconscionable. However, some jurisdictions may have specific protections that override certain contract provisions."
-      };
-    } else if (question.toLowerCase().includes('void') || question.toLowerCase().includes('cancel')) {
-      return {
-        answer: "To void or cancel an agreement typically requires either: 1) mutual agreement by all parties, 2) a material breach by one party that allows the other to terminate, 3) proving the contract was entered under duress, fraud, or mistake, or 4) showing the agreement violates public policy or law."
-      };
-    } else {
-      return {
-        answer: `Regarding your question about "${question}": This would typically require legal analysis specific to the clause and jurisdiction. While I can provide general information, for specific legal advice about your situation, you should consult with a qualified attorney.`
-      };
+    if (!apiKey) {
+      toast.error('Please enter your Gemini API key in settings');
+      throw new Error('Gemini API key not found');
     }
+    
+    const prompt = `
+      I previously analyzed this legal clause: "${originalClause}"
+      
+      Now I have a follow-up question: "${question}"
+      
+      Please provide a clear, concise answer to my question about this legal clause. Give me an accurate legal perspective, but explain it in plain language that a non-lawyer can understand.
+    `;
+    
+    toast.info('Getting answer to your question...');
+    const answer = await callGeminiAPI(prompt, apiKey);
+    
+    return { answer: answer.trim() };
   } catch (error) {
     console.error('Follow-up question error:', error);
     toast.error('Failed to submit follow-up question');

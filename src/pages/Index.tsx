@@ -1,14 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, FileText, Loader, Send, RefreshCw, HelpCircle } from "lucide-react";
+import { AlertTriangle, FileText, Loader, Send, RefreshCw, HelpCircle, Settings } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import FileUploader from "@/components/FileUploader";
 import RiskBadge from "@/components/RiskBadge";
+import SettingsDialog from "@/components/SettingsDialog";
 import { analyzeClause, submitFollowupQuestion, type AnalysisResponse, type FollowupResponse } from "@/lib/api-services";
 
 const Index = () => {
@@ -18,10 +19,32 @@ const Index = () => {
   const [followupQuestion, setFollowupQuestion] = useState('');
   const [isSubmittingQuestion, setIsSubmittingQuestion] = useState(false);
   const [followupAnswers, setFollowupAnswers] = useState<{question: string; answer: string}[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  
+  // Check if API key exists on component mount and window focus
+  useEffect(() => {
+    const checkApiKey = () => {
+      const key = localStorage.getItem('gemini_api_key');
+      setHasApiKey(!!key);
+    };
+    
+    checkApiKey();
+    
+    // Also check when window regains focus
+    window.addEventListener('focus', checkApiKey);
+    return () => window.removeEventListener('focus', checkApiKey);
+  }, []);
   
   const handleAnalyze = async () => {
     if (!legalClause.trim()) {
       toast.warning('Please enter a legal clause or upload a document');
+      return;
+    }
+    
+    if (!hasApiKey) {
+      toast.error('Please enter your Gemini API key in settings first');
+      setSettingsOpen(true);
       return;
     }
     
@@ -58,6 +81,12 @@ const Index = () => {
       return;
     }
     
+    if (!hasApiKey) {
+      toast.error('Please enter your Gemini API key in settings first');
+      setSettingsOpen(true);
+      return;
+    }
+    
     setIsSubmittingQuestion(true);
     
     try {
@@ -90,6 +119,17 @@ const Index = () => {
     <div className="min-h-screen flex flex-col items-center py-8 px-4 md:px-8 bg-background">
       <div className="w-full max-w-4xl">
         <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-full flex justify-end mb-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setSettingsOpen(true)}
+              className="gap-1"
+            >
+              <Settings size={16} />
+              <span className="hidden sm:inline">Settings</span>
+            </Button>
+          </div>
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-legal-action via-teal-300 to-legal-action bg-clip-text text-transparent">
             ClearClause: AI Legal Simplifier
           </h1>
@@ -251,6 +291,7 @@ const Index = () => {
           </>
         )}
       </div>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
