@@ -3,6 +3,11 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, FileX } from "lucide-react";
 import { toast } from '@/components/ui/sonner';
+import * as pdfjsLib from 'pdfjs-dist';
+import { TextLayerMode } from 'pdfjs-dist/types/web/interfaces';
+
+// Set the worker source for pdf.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface FileUploaderProps {
   onContentExtracted: (content: string) => void;
@@ -40,33 +45,39 @@ const FileUploader = ({ onContentExtracted, className }: FileUploaderProps) => {
     
     try {
       if (file.type === 'text/plain') {
+        // For plain text files, simply read the content
         const text = await file.text();
         onContentExtracted(text);
       } else if (file.type === 'application/pdf') {
-        // For PDF files, we would use a library like pdf.js
-        // This is a simplified simulation
-        const formData = new FormData();
-        formData.append('file', file);
+        // For PDF files, use pdf.js to extract text
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfData = new Uint8Array(arrayBuffer);
         
-        // In a real implementation, you'd send to backend for processing
-        // Simulating PDF extraction with a delay
-        setTimeout(() => {
-          const simulatedText = `This is extracted text from "${file.name}".\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, eget aliquam nisl nunc vel nisl. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, eget aliquam nisl nunc vel nisl.`;
-          onContentExtracted(simulatedText);
-          setIsLoading(false);
-        }, 1500);
-        
-        return; // Early return due to setTimeout
+        try {
+          const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+          const pdf = await loadingTask.promise;
+          let extractedText = '';
+          
+          // Extract text from each page
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const textItems = textContent.items.map((item: any) => 
+              'str' in item ? item.str : ''
+            );
+            extractedText += textItems.join(' ') + '\n\n';
+          }
+          
+          onContentExtracted(extractedText.trim());
+        } catch (error) {
+          console.error('PDF extraction error:', error);
+          toast.error('Failed to extract text from PDF');
+        }
       } else {
-        // For DOCX files
-        // Similarly simulating extraction
-        setTimeout(() => {
-          const simulatedText = `This is extracted text from "${file.name}".\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, eget aliquam nisl nunc vel nisl.`;
-          onContentExtracted(simulatedText);
-          setIsLoading(false);
-        }, 1500);
-        
-        return; // Early return due to setTimeout
+        // For DOCX/DOC files, we'd need a server-side solution or a specialized library
+        // Since browser-side DOCX parsing is limited, we'll show a message
+        toast.warning('DOCX/DOC extraction requires server processing. This feature is limited in the browser.');
+        onContentExtracted(`[Document extraction from ${file.name} is limited in browser. For best results, please copy and paste the content directly.]`);
       }
     } catch (error) {
       console.error('Error extracting text:', error);
