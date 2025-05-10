@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, FileX } from "lucide-react";
 import { toast } from '@/components/ui/sonner';
 import * as pdfjsLib from 'pdfjs-dist';
-import { TextLayerMode } from 'pdfjs-dist/types/web/interfaces';
 
 // Set the worker source for pdf.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
