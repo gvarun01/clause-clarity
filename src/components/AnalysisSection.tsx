@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AnalysisResponse } from "@/lib/api-services";
 import { Check } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 interface AnalysisSectionProps {
   analysis: AnalysisResponse | null;
@@ -20,9 +20,11 @@ const AnalysisSection = ({ analysis }: AnalysisSectionProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <p className="text-foreground/90 leading-relaxed text-base">
-          {analysis.simplifiedExplanation}
-        </p>
+        <div className="text-foreground/90 leading-relaxed text-base prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown>
+            {analysis.simplifiedExplanation}
+          </ReactMarkdown>
+        </div>
       </CardContent>
     </Card>
   );

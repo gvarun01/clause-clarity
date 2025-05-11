@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Loader, Send } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { submitFollowupQuestion, type FollowupResponse } from "@/lib/api-services";
+import { HelpCircle, Send } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { submitFollowupQuestion } from "@/lib/api-services";
+import ReactMarkdown from 'react-markdown';
 
 interface FollowupQuestionsSectionProps {
   legalClause: string;
@@ -75,7 +75,11 @@ const FollowupQuestionsSection = ({
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-secondary/30 py-3 px-4 rounded-2xl rounded-tl-none max-w-[85%]">
-                    <p className="text-sm text-foreground/90">{qa.answer}</p>
+                    <div className="text-sm text-foreground/90 prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown>
+                        {qa.answer}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -84,13 +88,12 @@ const FollowupQuestionsSection = ({
           </div>
         )}
         
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <Input
             value={followupQuestion}
             onChange={(e) => setFollowupQuestion(e.target.value)}
             placeholder="Ask a follow-up question..."
-            className="flex-1 bg-background/50"
-            disabled={isSubmittingQuestion}
+            className="flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -98,18 +101,13 @@ const FollowupQuestionsSection = ({
               }
             }}
           />
-          <Button
+          <Button 
             onClick={handleSubmitQuestion}
             disabled={isSubmittingQuestion || !followupQuestion.trim()}
-            size="sm"
-            className="bg-legal-action hover:bg-legal-action/80"
+            className="gap-2"
           >
-            {isSubmittingQuestion ? (
-              <Loader size={16} className="animate-spin" />
-            ) : (
-              <Send size={16} />
-            )}
-            <span className="sr-only">Send</span>
+            <Send size={16} />
+            {isSubmittingQuestion ? 'Sending...' : 'Send'}
           </Button>
         </div>
       </CardContent>
