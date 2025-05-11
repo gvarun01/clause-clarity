@@ -1,6 +1,7 @@
 
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface AnalysisResponse {
   simplifiedExplanation: string;
@@ -168,10 +169,16 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       try {
+        // Convert AnalysisResponse to a JSON object that's compatible with Supabase's Json type
+        const analysisJson = {
+          simplifiedExplanation: result.simplifiedExplanation,
+          riskyTerms: result.riskyTerms
+        } as Json;
+        
         await supabase.from('chat_history').insert({
           user_id: user.id,
           legal_clause: clause,
-          analysis: result
+          analysis: analysisJson
         });
       } catch (error) {
         console.error('Failed to save analysis to database:', error);
