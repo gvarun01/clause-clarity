@@ -20,7 +20,7 @@ const AnalysisSection = ({ analysis }: AnalysisSectionProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="text-foreground/90 leading-relaxed text-base prose prose-sm max-w-none dark:prose-invert">
+        <div className="text-foreground/90 leading-relaxed text-base prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-code:text-foreground prose-pre:text-foreground prose-blockquote:text-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground">
           <ReactMarkdown>
             {analysis.simplifiedExplanation}
           </ReactMarkdown>

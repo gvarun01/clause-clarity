@@ -75,7 +75,7 @@ const FollowupQuestionsSection = ({
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-secondary/30 py-3 px-4 rounded-2xl rounded-tl-none max-w-[85%]">
-                    <div className="text-sm text-foreground/90 prose prose-sm max-w-none dark:prose-invert">
+                    <div className="text-sm text-foreground/90 prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-code:text-foreground prose-pre:text-foreground prose-blockquote:text-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground">
                       <ReactMarkdown>
                         {qa.answer}
                       </ReactMarkdown>
