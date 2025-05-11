@@ -18,34 +18,44 @@ const RiskyTermsSection = ({ analysis }: RiskyTermsSectionProps) => {
       <CardHeader className="border-b border-border/20">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle size={18} className="text-legal-moderate" />
-          Risky Terms Detected
+          {analysis.riskyTerms.length > 0 ? 'Risky Terms Detected' : 'Risk Analysis'}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="pt-6">
         {analysis.riskyTerms.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[180px]">Term</TableHead>
-                <TableHead className="w-[120px]">Risk Level</TableHead>
-                <TableHead>Explanation</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {analysis.riskyTerms.map((term, idx) => (
-                <TableRow key={idx}>
-                  <TableCell className="font-semibold text-legal-action">{term.term}</TableCell>
-                  <TableCell>
-                    <RiskBadge level={term.severity} />
-                  </TableCell>
-                  <TableCell className="text-foreground/90">{term.explanation}</TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-muted/30">
+                  <TableHead className="w-[180px] font-semibold">Term</TableHead>
+                  <TableHead className="w-[120px] font-semibold">Risk Level</TableHead>
+                  <TableHead className="font-semibold">Explanation</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {analysis.riskyTerms.map((term, idx) => (
+                  <TableRow key={idx} className="hover:bg-muted/20">
+                    <TableCell className="font-semibold text-legal-action">{term.term}</TableCell>
+                    <TableCell>
+                      <RiskBadge level={term.severity} />
+                    </TableCell>
+                    <TableCell className="text-foreground/90">{term.explanation}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-sm text-muted-foreground italic">No risky terms detected in this text.</p>
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <div className="p-3 rounded-full bg-green-500/10 mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <p className="text-md font-medium text-foreground">No risky terms detected</p>
+            <p className="text-sm text-muted-foreground text-center">
+              This text appears to be safe from a legal risk perspective. No concerning terms were identified.
+            </p>
           </div>
         )}
       </CardContent>

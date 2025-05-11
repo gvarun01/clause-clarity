@@ -65,7 +65,7 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
       throw new Error('Gemini API key not found');
     }
 
-    // Create prompts for the different analysis parts
+    // Improved prompts for more accurate analysis
     const simplificationPrompt = `
       I need you to analyze and simplify the following legal clause in plain English. Provide a clear, concise explanation that a non-lawyer can understand:
       
@@ -75,26 +75,33 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
     `;
     
     const riskyTermsPrompt = `
-      Analyze the following legal clause and identify potentially risky terms that could be unfavorable to one party:
+      Analyze the following legal clause and identify only genuinely problematic terms that could create legal risks:
       
       "${clause}"
       
-      For each risky term you identify, provide:
-      1. The specific term/word (just the word or short phrase)
+      IMPORTANT GUIDELINES:
+      - Only identify terms that are truly problematic in a legal context
+      - If the text is too short (less than 15 words) or doesn't contain actual legal language, return an empty array
+      - Don't force finding risky terms if none genuinely exist
+      - Focus on terms with actual legal implications like indemnification, liability, termination, etc.
+      - Ignore common words unless they create specific legal issues in this context
+      
+      For each legitimate risky term, provide:
+      1. The specific term/word/phrase (just the relevant text)
       2. A severity level (high, moderate, or low)
-      3. A brief explanation of why this term is risky
+      3. A brief explanation of why this term creates legal risk
       
       Format your response strictly as JSON with this structure:
       [
         {
-          "term": "word or short phrase",
+          "term": "specific legal term or phrase",
           "severity": "high/moderate/low",
-          "explanation": "brief explanation"
+          "explanation": "brief explanation of legal risk"
         },
         {...}
       ]
       
-      If no risky terms are found, return an empty array: []
+      If no risky terms are found or if the text is too short for meaningful analysis, return an empty array: []
     `;
 
     // Make parallel API calls for efficiency
