@@ -8,6 +8,8 @@ import LegalInputSection from '@/components/LegalInputSection';
 import AnalysisSection from '@/components/AnalysisSection';
 import RiskyTermsSection from '@/components/RiskyTermsSection';
 import FollowupQuestionsSection from '@/components/FollowupQuestionsSection';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [legalClause, setLegalClause] = useState('');
@@ -15,10 +17,26 @@ const Index = () => {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const { user } = useAuth();
   
-  // Check if API key exists on component mount and window focus
+  // Check if API key exists when component mounts and when user changes
   useEffect(() => {
-    const checkApiKey = () => {
+    const checkApiKey = async () => {
+      if (user) {
+        // Check if API key exists in Supabase
+        const { data, error } = await supabase
+          .from('api_keys')
+          .select('gemini_api_key')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (!error && data) {
+          setHasApiKey(true);
+          return;
+        }
+      }
+      
+      // Fall back to localStorage
       const key = localStorage.getItem('gemini_api_key');
       setHasApiKey(!!key);
     };
@@ -26,9 +44,13 @@ const Index = () => {
     checkApiKey();
     
     // Also check when window regains focus
-    window.addEventListener('focus', checkApiKey);
-    return () => window.removeEventListener('focus', checkApiKey);
-  }, []);
+    const handleFocus = () => {
+      checkApiKey();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
   
   const handleAnalyze = async () => {
     if (!legalClause.trim()) {

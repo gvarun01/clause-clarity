@@ -1,5 +1,6 @@
 
 import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AnalysisResponse {
   simplifiedExplanation: string;
@@ -14,8 +15,34 @@ export interface FollowupResponse {
   answer: string;
 }
 
+// Function to get the current user's Gemini API key
+async function getGeminiApiKey() {
+  // First check if user is logged in
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    // Try to get API key from Supabase
+    const { data, error } = await supabase
+      .from('api_keys')
+      .select('gemini_api_key')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (data && !error) {
+      return data.gemini_api_key;
+    }
+  }
+  
+  // Fallback to localStorage for backward compatibility
+  return localStorage.getItem('gemini_api_key');
+}
+
 // Function to handle Gemini API requests
-async function callGeminiAPI(prompt: string, apiKey: string) {
+async function callGeminiAPI(prompt: string, apiKey: string | null) {
+  if (!apiKey) {
+    throw new Error('No API key provided');
+  }
+
   try {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
       method: 'POST',
@@ -57,8 +84,8 @@ async function callGeminiAPI(prompt: string, apiKey: string) {
 
 export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
   try {
-    // Get API key from localStorage (this would be set by user)
-    const apiKey = localStorage.getItem('gemini_api_key');
+    // Get API key
+    const apiKey = await getGeminiApiKey();
     
     if (!apiKey) {
       toast.error('Please enter your Gemini API key in settings');
@@ -136,6 +163,21 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
       simplifiedExplanation: simplifiedExplanation.trim(),
       riskyTerms: riskyTerms
     };
+    
+    // Store analysis in Supabase if user is logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      try {
+        await supabase.from('chat_history').insert({
+          user_id: user.id,
+          legal_clause: clause,
+          analysis: result
+        });
+      } catch (error) {
+        console.error('Failed to save analysis to database:', error);
+        // Continue even if saving fails
+      }
+    }
 
     return result;
   } catch (error) {
@@ -147,8 +189,8 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
 
 export async function submitFollowupQuestion(question: string, originalClause: string): Promise<FollowupResponse> {
   try {
-    // Get API key from localStorage
-    const apiKey = localStorage.getItem('gemini_api_key');
+    // Get API key
+    const apiKey = await getGeminiApiKey();
     
     if (!apiKey) {
       toast.error('Please enter your Gemini API key in settings');
