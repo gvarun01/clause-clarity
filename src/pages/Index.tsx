@@ -8,6 +8,7 @@ import LegalInputSection from '@/components/LegalInputSection';
 import AnalysisSection from '@/components/AnalysisSection';
 import RiskyTermsSection from '@/components/RiskyTermsSection';
 import FollowupQuestionsSection from '@/components/FollowupQuestionsSection';
+import AnalysisResultDisplay from '@/components/AnalysisResultDisplay';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -110,6 +111,8 @@ const Index = () => {
         
         {analysis && (
           <>
+            <AnalysisResultDisplay legalClause={legalClause} analysis={analysis} />
+            
             <AnalysisSection analysis={analysis} />
             
             <RiskyTermsSection analysis={analysis} />
