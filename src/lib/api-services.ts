@@ -1,7 +1,12 @@
-
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
+
+export interface GovernmentArticle {
+  title: string;
+  url: string;
+  relevance: string;
+}
 
 export interface AnalysisResponse {
   simplifiedExplanation: string;
@@ -10,6 +15,7 @@ export interface AnalysisResponse {
     severity: 'high' | 'moderate' | 'low';
     explanation: string;
   }[];
+  governmentArticles: GovernmentArticle[];
 }
 
 export interface FollowupResponse {
@@ -132,11 +138,43 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
       If no risky terms are found or if the text is too short for meaningful analysis, return an empty array: []
     `;
 
+    const governmentArticlesPrompt = `
+      Analyze the following legal clause and identify any relevant government articles, laws, or regulations that it might be related to:
+      
+      "${clause}"
+      
+      IMPORTANT GUIDELINES:
+      - Only identify articles that are DIRECTLY relevant to the clause
+      - If no relevant articles are found, return an empty array
+      - Don't force finding articles if none are genuinely related
+      - Focus on specific articles, laws, or regulations that the clause might be based on or related to
+      - For Indian laws, use these official sources:
+        * indiankanoon.org
+        * legislative.gov.in
+        * lawfinderlive.com
+      - Always include a valid URL to the official source
+      - If you find articles mentioned in the text, make sure to include them
+      
+      Format your response strictly as JSON with this structure:
+      [
+        {
+          "title": "Article/Law title",
+          "url": "Official URL to the article",
+          "relevance": "Brief explanation of how this article relates to the clause"
+        }
+      ]
+      
+      If no relevant articles are found, return an empty array: []
+      
+      IMPORTANT: Your response must be valid JSON. Do not include any other text before or after the JSON array.
+    `;
+
     // Make parallel API calls for efficiency
     toast.info('Analyzing your legal clause...');
-    const [simplifiedExplanation, riskyTermsResponse] = await Promise.all([
+    const [simplifiedExplanation, riskyTermsResponse, governmentArticlesResponse] = await Promise.all([
       callGeminiAPI(simplificationPrompt, apiKey),
-      callGeminiAPI(riskyTermsPrompt, apiKey)
+      callGeminiAPI(riskyTermsPrompt, apiKey),
+      callGeminiAPI(governmentArticlesPrompt, apiKey)
     ]);
 
     // Parse the risky terms JSON
@@ -160,9 +198,48 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
       riskyTerms = [];
     }
 
+    // Parse the government articles JSON
+    let governmentArticles = [];
+    try {
+      // First try to parse the entire response as JSON
+      try {
+        governmentArticles = JSON.parse(governmentArticlesResponse);
+      } catch {
+        // If that fails, try to find JSON content by looking for array brackets
+        const jsonMatch = governmentArticlesResponse.match(/\[\s*\{.*\}\s*\]/s);
+        if (jsonMatch) {
+          governmentArticles = JSON.parse(jsonMatch[0]);
+        }
+      }
+      
+      // Ensure correct format for each article and validate URLs
+      governmentArticles = governmentArticles
+        .filter(article => {
+          // Basic validation
+          if (!article.title || !article.url || !article.relevance) return false;
+          
+          // URL validation
+          try {
+            new URL(article.url);
+            return true;
+          } catch {
+            return false;
+          }
+        })
+        .map(article => ({
+          title: article.title.trim(),
+          url: article.url.trim(),
+          relevance: article.relevance.trim()
+        }));
+    } catch (error) {
+      console.error('Failed to parse government articles:', error);
+      governmentArticles = [];
+    }
+
     const result: AnalysisResponse = {
       simplifiedExplanation: simplifiedExplanation.trim(),
-      riskyTerms: riskyTerms
+      riskyTerms: riskyTerms,
+      governmentArticles: governmentArticles
     };
     
     // Store analysis in Supabase if user is logged in
@@ -172,7 +249,8 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
         // Convert AnalysisResponse to a JSON object that's compatible with Supabase's Json type
         const analysisJson = {
           simplifiedExplanation: result.simplifiedExplanation,
-          riskyTerms: result.riskyTerms
+          riskyTerms: result.riskyTerms,
+          governmentArticles: result.governmentArticles
         } as Json;
         
         await supabase.from('chat_history').insert({
@@ -189,7 +267,7 @@ export async function analyzeClause(clause: string): Promise<AnalysisResponse> {
     return result;
   } catch (error) {
     console.error('Analysis error:', error);
-    toast.error('Failed to analyze the legal clause');
+    toast.error('Failed to analyze legal clause');
     throw error;
   }
 }
