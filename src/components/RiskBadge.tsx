@@ -7,12 +7,12 @@ interface RiskBadgeProps {
 }
 
 const RiskBadge = ({ level, className }: RiskBadgeProps) => {
-  const baseClasses = "px-2 py-0.5 text-xs font-medium rounded-full";
+  const baseClasses = "inline-flex items-center px-3 py-1 text-xs font-medium rounded-full";
   
   const levelClasses = {
-    high: "bg-legal-high/20 text-legal-high border border-legal-high/30",
-    moderate: "bg-legal-moderate/20 text-legal-moderate border border-legal-moderate/30",
-    low: "bg-legal-low/20 text-legal-low border border-legal-low/30",
+    high: "bg-legal-high/15 text-legal-high border border-legal-high/30 shadow-sm",
+    moderate: "bg-legal-moderate/15 text-legal-moderate border border-legal-moderate/30 shadow-sm",
+    low: "bg-legal-low/15 text-legal-low border border-legal-low/30 shadow-sm",
   };
   
   const levelLabels = {

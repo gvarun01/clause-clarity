@@ -33,7 +33,7 @@
     --input: 214 32% 28%;
     --ring: 222 84% 70%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;
@@ -53,5 +53,15 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-lg transition-all;
+  }
+  
+  .hover-lift {
+    @apply transition-transform hover:-translate-y-1 duration-200;
   }
 }

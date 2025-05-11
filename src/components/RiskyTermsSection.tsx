@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import RiskBadge from "@/components/RiskBadge";
 import type { AnalysisResponse } from "@/lib/api-services";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface RiskyTermsSectionProps {
   analysis: AnalysisResponse | null;
@@ -13,28 +14,39 @@ const RiskyTermsSection = ({ analysis }: RiskyTermsSectionProps) => {
   if (!analysis) return null;
   
   return (
-    <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-      <CardHeader>
+    <Card className="mb-8 bg-card/50 backdrop-blur-sm border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="border-b border-border/20">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle size={18} className="text-legal-moderate" />
           Risky Terms Detected
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {analysis.riskyTerms.length > 0 ? (
-          <div className="space-y-4">
-            {analysis.riskyTerms.map((term, idx) => (
-              <div key={idx} className="flex flex-col md:flex-row gap-2 md:items-start p-3 bg-secondary/30 rounded-md">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 min-w-[150px]">
-                  <span className="font-semibold text-legal-action">"{term.term}"</span>
-                  <RiskBadge level={term.severity} />
-                </div>
-                <p className="text-sm text-foreground/90">{term.explanation}</p>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[180px]">Term</TableHead>
+                <TableHead className="w-[120px]">Risk Level</TableHead>
+                <TableHead>Explanation</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.riskyTerms.map((term, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="font-semibold text-legal-action">{term.term}</TableCell>
+                  <TableCell>
+                    <RiskBadge level={term.severity} />
+                  </TableCell>
+                  <TableCell className="text-foreground/90">{term.explanation}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
-          <p className="text-sm text-muted-foreground italic">No risky terms detected in this text.</p>
+          <div className="flex items-center justify-center py-8">
+            <p className="text-sm text-muted-foreground italic">No risky terms detected in this text.</p>
+          </div>
         )}
       </CardContent>
     </Card>
