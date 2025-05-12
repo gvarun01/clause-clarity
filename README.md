@@ -1,73 +1,100 @@
-# Welcome to your Lovable project
+# ClearClause: AI Legal Simplifier 🤖⚖️
 
-## Project info
+ClearClause is an AI-powered web application that makes complex legal language accessible to everyone by providing plain English explanations and risk analysis.
 
-**URL**: https://lovable.dev/projects/6949a855-60b6-41f2-a19a-21e9c568890f
+## 🚀 Quick Start
 
-## How can I edit this code?
+### Prerequisites
 
-There are several ways of editing your application.
+- Node.js 18.x or higher
+- npm 9.x or higher
+- Gemini API key
+- Supabase account
 
-**Use Lovable**
+### Installation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6949a855-60b6-41f2-a19a-21e9c568890f) and start prompting.
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/clause-clarity-ai-wizard.git
 
-Changes made via Lovable will be committed automatically to this repo.
+# Navigate to project directory
+cd clause-clarity-ai-wizard
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Install dependencies
+npm install
 ```
 
-**Edit a file directly in GitHub**
+### Environment Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file in the root directory:
 
-**Use GitHub Codespaces**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_key
+VITE_GEMINI_API_KEY=your_gemini_api_key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Development Commands
 
-## What technologies are used for this project?
+```bash
+# Start development server
+npm run dev
 
-This project is built with:
+# Build for production
+npm run build
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Run tests
+npm test
+```
 
-## How can I deploy this project?
+## 🛠️ Technology Stack
 
-Simply open [Lovable](https://lovable.dev/projects/6949a855-60b6-41f2-a19a-21e9c568890f) and click on Share -> Publish.
+- **Frontend**: React + TypeScript
+- **UI Components**: Tailwind CSS
+- **AI Integration**: Google Gemini API
+- **Database & Auth**: Supabase
+- **Deployment**: Vercel/Netlify
 
-## Can I connect a custom domain to my Lovable project?
+## 📦 Key Features
 
-Yes, you can!
+- 🔍 Legal text analysis and simplification
+- ⚠️ Risk assessment and identification
+- 👤 User authentication
+- 📝 Analysis history tracking
+- 💾 Export functionality
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📁 Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```
+clause-clarity-ai-wizard/
+├── src/
+│   ├── components/       # React components
+│   ├── lib/             # Utility functions & services
+│   │   └── api-services.ts  # API integration logic
+│   ├── integrations/    # Third-party service integrations
+│   └── pages/           # Page components
+├── public/              # Static assets
+└── tests/              # Test files
+```
+
+## 💻 API Integration
+
+The application integrates with:
+- Google Gemini API for text analysis
+- Supabase for data storage and authentication
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+
+## 🙏 Acknowledgments
+
+- Google Gemini API
+- Supabase
+- React community
+
