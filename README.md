@@ -3,6 +3,11 @@
 ClearClause is an AI-powered web application that makes complex legal language accessible to everyone by providing plain English explanations and risk analysis.
 
 ## 🚀 Quick Start
+Vercel Deployment:
+https://clause-clarity.vercel.app/
+
+Presentation:
+https://iiithydstudents-my.sharepoint.com/:p:/g/personal/virat_garg_students_iiit_ac_in/EUrBMPcAdGtBnW2GSigup80BWVGSCZIh6TL8oSrT0C2GTQ?e=Rz4TkC
 
 ### Prerequisites
 
