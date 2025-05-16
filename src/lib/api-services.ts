@@ -287,7 +287,14 @@ export async function submitFollowupQuestion(question: string, originalClause: s
       
       Now I have a follow-up question: "${question}"
       
-      Please provide a clear, concise answer to my question about this legal clause. Give me an accurate legal perspective, but explain it in plain language that a non-lawyer can understand.
+      Please provide a CONCISE answer to my question about this legal clause. Follow these guidelines:
+      - Keep the answer brief and to the point (2-3 sentences maximum)
+      - Focus only on directly answering the question
+      - Use simple, clear language
+      - Avoid unnecessary explanations or examples
+      - If the question requires a yes/no answer, start with that
+      
+      Respond with ONLY the answer, no additional text or formatting.
     `;
     
     toast.info('Getting answer to your question...');
